@@ -1,0 +1,103 @@
+﻿@page "/"
+@using BlazorContractFormsPoc.Shared
+@using System.Text.Json
+@inject HttpClient Http
+
+<h1>Forms</h1>
+
+<p>This component demonstrates automatic generation of form data.</p>
+
+@if (data == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<EditForm OnValidSubmit="@SubmitOffice" EditContext="editContext">
+    <ObjectGraphDataAnnotationsValidator />
+    <ValidationSummary />
+
+    <p>
+        <label>String</label>
+        <InputText id="String" @bind-Value="office.String" />
+    </p>
+    <p>
+        <label>Bool</label>
+        <InputCheckbox id="Checkbox" @bind-Value="office.Enabled" />
+    </p>
+    <p>
+        <label>Enum</label>
+        <InputSelect id="InputSelect" @bind-Value="office.OfficeType">
+            @foreach (var option in Enum.GetValues<OfficeType>())
+            {
+                <option value="@option">@option</option>
+            }
+        </InputSelect>
+    </p>
+    <p>
+        <label>Date time</label>
+        <InputDate id="InputDate" @bind-Value="office.DateTime" />
+    </p>
+    <p>
+        <label>Int</label>
+        <InputNumber id="InputInt" @bind-Value="office.Int" />
+    </p>
+    
+    <table>
+        <thead>
+        <tr>
+            <td>#</td>
+            <td>Name</td>
+        </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < office.Staff.Count; i++)
+            {
+                int index = i;
+                string id = "Staff" + index;
+                <tr>
+                    <td>@i</td>    
+                    <td>
+                        <InputText id="@id" @bind-Value="office.Staff[index].Name" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+
+    <button type="submit">Submit</button>
+</EditForm>
+
+
+
+
+    <p><span style="white-space: pre-line">@data</span></p>
+}
+
+@code {
+    private Office office;
+    private string data;
+
+    private EditContext editContext;
+
+    protected override async Task OnInitializedAsync()
+    {
+        office = await Http.GetFromJsonAsync<Office>("Office");
+        data = JsonSerializer.Serialize(office, new JsonSerializerOptions()
+        {
+            WriteIndented = true
+        });
+        editContext = new EditContext(office);
+        editContext.Validate();
+    }
+
+    private async Task SubmitOffice()
+    {
+        await Http.PostAsJsonAsync("Office", office);
+
+        await OnInitializedAsync();
+
+    }
+}
